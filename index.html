@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BNB Bank Bot - Web App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 16px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 20px 0;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 15px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+        
+        .user-info {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--tg-theme-hint-color, #999);
+        }
+        
+        .card {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.15s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .card:active {
+            transform: scale(0.97);
+            opacity: 0.8;
+        }
+        
+        .card h3 {
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .card-icon {
+            font-size: 22px;
+            margin-right: 10px;
+        }
+        
+        .card p {
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .button {
+            background: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: opacity 0.15s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .button:active {
+            opacity: 0.7;
+        }
+        
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .button-secondary {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        .steps-list {
+            list-style: none;
+        }
+        
+        .step-item {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .step-number {
+            background: var(--tg-theme-button-color, #3390ec);
+            color: white;
+            min-width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        
+        .step-text {
+            font-size: 14px;
+            line-height: 1.5;
+            padding-top: 2px;
+        }
+        
+        .receipt-upload {
+            border: 2px dashed var(--tg-theme-hint-color, #999);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: background 0.2s;
+        }
+        
+        .receipt-upload:active {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        }
+        
+        .receipt-upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        
+        .receipt-upload h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        
+        .receipt-upload p {
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 13px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        #previewContainer {
+            margin: 20px 0;
+        }
+        
+        #preview {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--tg-theme-hint-color, #ddd);
+            font-size: 15px;
+            resize: vertical;
+            font-family: inherit;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+            margin-bottom: 12px;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color, #3390ec);
+        }
+        
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-top-color: var(--tg-theme-button-color, #3390ec);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 BNB Bank Bot</h1>
+            <p>Получите бонус за новую карту</p>
+        </div>
+        
+        <div class="user-info">
+            <div class="info-row">
+                <span class="info-label">👤 Пользователь:</span>
+                <span id="userName">Загрузка...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">🆔 ID:</span>
+                <span id="userId">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">📊 Статус:</span>
+                <span id="userStatus"><span class="status-badge status-pending">Ожидание чека</span></span>
+            </div>
+        </div>
+        
+        <!-- Главное меню -->
+        <div id="mainMenu">
+            <div class="card" onclick="showGuide()">
+                <h3><span class="card-icon">📋</span> Инструкция</h3>
+                <p>Как получить бонус за карту БНБ-Банка</p>
+            </div>
+            
+            <div class="card" onclick="showReceipt()">
+                <h3><span class="card-icon">💰</span> Отправить чек</h3>
+                <p>Загрузите фото чека перевода</p>
+            </div>
+            
+            <div class="card" onclick="showSupport()">
+                <h3><span class="card-icon">🆘</span> Поддержка</h3>
+                <p>Задать вопрос или сообщить о проблеме</p>
+            </div>
+            
+            <div class="card" onclick="showAbout()">
+                <h3><span class="card-icon">ℹ️</span> О боте</h3>
+                <p>Информация о боте и условиях</p>
+            </div>
+        </div>
+        
+        <!-- Инструкция -->
+        <div id="guideSection" class="hidden">
+            <h2 class="section-title">📋 Инструкция</h2>
+            <ul class="steps-list">
+                <li class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-text">Скачайте приложение BNB-Bank и пройдите регистрацию</div>
+                </li>
+                <li class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-text">Выберите раздел «Продукты» → «Карты» → «Новая карта»</div>
+                </li>
+                <li class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-text">Выберите карточку 1-2-3 (цифровая оформляется моментально)</div>
+                </li>
+                <li class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-text">Нажмите «Продолжить» и проверьте паспортные данные</div>
+                </li>
+                <li class="step-item">
+                    <div class="step-number">5</div>
+                    <div class="step-text">Подтвердите SMS-кодом и пополните карту любым способом</div>
+                </li>
+                <li class="step-item">
+                    <div class="step-number">6</div>
+                    <div class="step-text">Отправьте РОВНО 1.23 BYN на наш счёт с вашей карты БНБ</div>
+                </li>
+                <li class="step-item">
+                    <div class="step-number">7</div>
+                    <div class="step-text">Отправьте фото чека в бота и ждите бонус!</div>
+                </li>
+            </ul>
+            <button class="button" onclick="showMain()">⬅️ Назад</button>
+        </div>
+        
+        <!-- Загрузка чека -->
+        <div id="receiptSection" class="hidden">
+            <h2 class="section-title">💰 Отправить чек</h2>
+            
+            <div class="receipt-upload" onclick="document.getElementById('fileInput').click()">
+                <div class="receipt-upload-icon">📸</div>
+                <h3>Нажмите для загрузки фото чека</h3>
+                <p>Чек должен показывать сумму 1.23 BYN</p>
+            </div>
+            
+            <input type="file" id="fileInput" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(event)">
+            
+            <div id="previewContainer" class="hidden">
+                <img id="preview" alt="Предпросмотр чека" />
+            </div>
+            
+            <button class="button" id="uploadButton" onclick="uploadReceipt()" disabled>📤 Отправить чек</button>
+            <button class="button button-secondary" onclick="showMain()">⬅️ Назад</button>
+        </div>
+        
+        <!-- Поддержка -->
+        <div id="supportSection" class="hidden">
+            <h2 class="section-title">🆘 Поддержка</h2>
+            
+            <textarea id="supportMessage" placeholder="Опишите вашу проблему..."></textarea>
+            
+            <button class="button" onclick="sendSupport()">📨 Отправить сообщение</button>
+            <button class="button button-secondary" onclick="showMain()">⬅️ Назад</button>
+        </div>
+        
+        <!-- О боте -->
+        <div id="aboutSection" class="hidden">
+            <h2 class="section-title">ℹ️ О боте</h2>
+            
+            <div class="card">
+                <h3>💎 Условия получения бонуса</h3>
+                <p style="margin-top: 10px; line-height: 1.6;">
+                    1. Оформите карту 1-2-3 в БНБ-Банке<br>
+                    2. Отправьте ровно 1.23 BYN на указанные реквизиты<br>
+                    3. Загрузите фото чека в бота<br>
+                    4. Бонус начисляется в течение 10 банковских дней
+                </p>
+            </div>
+            
+            <div class="card">
+                <h3>📞 Контакты</h3>
+                <p style="margin-top: 10px;">
+                    Если возникли вопросы - напишите в поддержку через бота
+                </p>
+            </div>
+            
+            <button class="button" onclick="showMain()">⬅️ Назад</button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        // Получаем данные пользователя
+        const user = tg.initDataUnsafe?.user;
+        
+        if (user) {
+            document.getElementById('userName').textContent = 
+                user.first_name + (user.last_name ? ' ' + user.last_name : '');
+            document.getElementById('userId').textContent = user.id;
+        } else {
+            document.getElementById('userName').textContent = 'Демо режим';
+            document.getElementById('userId').textContent = '000000';
+        }
+        
+        // Навигация
+        function showMain() {
+            hideAll();
+            document.getElementById('mainMenu').classList.remove('hidden');
+            tg.BackButton.hide();
+        }
+        
+        function showGuide() {
+            hideAll();
+            document.getElementById('guideSection').classList.remove('hidden');
+            tg.BackButton.show();
+            tg.BackButton.onClick(showMain);
+        }
+        
+        function showReceipt() {
+            hideAll();
+            document.getElementById('receiptSection').classList.remove('hidden');
+            tg.BackButton.show();
+            tg.BackButton.onClick(showMain);
+        }
+        
+        function showSupport() {
+            hideAll();
+            document.getElementById('supportSection').classList.remove('hidden');
+            tg.BackButton.show();
+            tg.BackButton.onClick(showMain);
+        }
+        
+        function showAbout() {
+            hideAll();
+            document.getElementById('aboutSection').classList.remove('hidden');
+            tg.BackButton.show();
+            tg.BackButton.onClick(showMain);
+        }
+        
+        function hideAll() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('guideSection').classList.add('hidden');
+            document.getElementById('receiptSection').classList.add('hidden');
+            document.getElementById('supportSection').classList.add('hidden');
+            document.getElementById('aboutSection').classList.add('hidden');
+        }
+        
+        // Обработка загрузки файла
+        let selectedFile = null;
+        
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                selectedFile = file;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview').src = e.target.result;
+                    document.getElementById('previewContainer').classList.remove('hidden');
+                    document.getElementById('uploadButton').disabled = false;
+                };
+                reader.readAsDataURL(file);
+                
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+        
+        // Отправка чека
+        function uploadReceipt() {
+            if (!selectedFile) {
+                tg.showAlert('Выберите фото чека');
+                return;
+            }
+            
+            tg.HapticFeedback.notificationOccurred('success');
+            
+            // Отправляем данные обратно в бота
+            tg.sendData(JSON.stringify({
+                action: 'receipt_uploaded',
+                user_id: user?.id || 0,
+                timestamp: new Date().toISOString()
+            }));
+        }
+        
+        // Отправка в поддержку
+        function sendSupport() {
+            const message = document.getElementById('supportMessage').value.trim();
+            
+            if (!message) {
+                tg.showAlert('Введите сообщение');
+                return;
+            }
+            
+            tg.HapticFeedback.notificationOccurred('success');
+            
+            // Отправляем данные обратно в бота
+            tg.sendData(JSON.stringify({
+                action: 'support_message',
+                user_id: user?.id || 0,
+                message: message,
+                timestamp: new Date().toISOString()
+            }));
+        }
+        
+        // Вибрация при нажатиях
+        document.querySelectorAll('.card, .button').forEach(el => {
+            el.addEventListener('click', () => {
+                tg.HapticFeedback.impactOccurred('light');
+            });
+        });
+        
+        // Закрытие при клике на MainButton
+        tg.MainButton.onClick(() => {
+            tg.close();
+        });
+    </script>
+</body>
+</html>
